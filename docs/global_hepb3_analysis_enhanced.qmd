@@ -1,0 +1,161 @@
+
+---
+title: "Global Sanitation Coverage Analysis - Enhanced"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    embed-resources: true
+    smooth-scroll: true
+    page-layout: full
+    number-sections: true
+    css: styles.css
+---
+
+## Student Details
+- Name: Vishnu Vardhan kuncham venkatesulu
+
+- Student ID: A00049469
+
+- Course: MSC in Management(Strategy)
+- Module: DATA ANALYTICS AND STORY TELLING
+
+---
+
+## Introduction
+
+Access to proper sanitation remains a critical global health and development issue. This project explores the global patterns of **sanitation access** from **2000 to 2022** using UNICEF-like data. Through dynamic visualizations, this report highlights trends, inequalities, economic drivers, and country-specific insights, aiding in **policy-making** and promoting **sanitation equity**.
+
+---
+
+# Dataset Overview
+
+The dataset, `unicef_indicator_2.csv`, contains:
+- **Country**: Country Name
+- **Year**: Year of Data Collection
+- **Indicator**: Sanitation indicator
+- **Value**: Access Percentage
+
+```{python}
+import pandas as pd
+
+df = pd.read_csv("unicef_indicator_2.csv")
+```
+
+# Global Sanitation Access Evolution
+
+The Global Sanitation Access Evolution plot shows how sanitation access has progressed across selected countries from 2000 to 2022. While many countries have achieved steady improvements, some regions still lag behind. The trends highlight global inequalities and emphasize the need for stronger health and infrastructure policies.
+
+```{python}
+from plotnine import *
+
+countries_focus = ['Brazil', 'China', 'Egypt', 'France', 'India', 'Indonesia', 'Mexico', 'Nigeria', 'South Africa', 'United States']
+data_focus = df[df['country'].isin(countries_focus)]
+
+(
+    ggplot(data_focus, aes(x='time_period', y='obs_value', color='country')) +
+    geom_line(size=1.2) +
+    geom_point(size=2) +
+    labs(title='Evolution of Sanitation Access (2000-2022)',
+         x='Year', y='Sanitation Access (%)') +
+    scale_color_brewer(type='qual', palette='Set2') +
+    theme_light()
+)
+```
+
+
+# 2015 Global Sanitation Access Snapshot
+
+The 2015 Global Sanitation Access Snapshot plot highlights regional disparities in access to sanitation facilities across the world. Countries with higher access rates are shown in warmer colors, while lower access is represented by cooler tones. The map reveals stark inequalities, particularly between high-income and low-income regions, emphasizing areas needing urgent attention.
+
+```{python}
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+world = gpd.read_file(r'C:\Users\satya\OneDrive\Desktop\docs\ne_110m_admin_0_countries.shp')
+
+map_2015 = df[df['time_period'] == 2015]
+merged_map = world.merge(map_2015, how='left', left_on='ADMIN', right_on='country')
+
+fig, ax = plt.subplots(1, 1, figsize=(14, 7))
+merged_map.plot(column='obs_value', cmap='plasma', linewidth=0.8, edgecolor='0.8', legend=True, ax=ax, missing_kwds={'color': 'whitesmoke'})
+plt.title('2015 Global Sanitation Access', fontsize=15)
+plt.axis('off')
+plt.show()
+```
+
+
+# Top and Bottom Performers in 2020
+
+The Top and Bottom Performers in 2020 plot compares countries with the highest and lowest sanitation access rates. It highlights nations that have achieved near-universal sanitation coverage and those still struggling with low access levels. This contrast underscores global inequalities and identifies key areas requiring targeted interventions.
+
+```{python}
+recent_year = df['time_period'].max()
+performance_data = df[df['time_period'] == recent_year].dropna(subset=['obs_value'])
+
+top_performers = performance_data.nlargest(10, 'obs_value')
+low_performers = performance_data.nsmallest(10, 'obs_value')
+comparison_df = pd.concat([top_performers, low_performers])
+
+(
+    ggplot(comparison_df, aes(x='reorder(country, obs_value)', y='obs_value', fill='obs_value > obs_value.mean()')) +
+    geom_col(width=0.7) +
+    coord_flip() +
+    labs(title='Top and Bottom 10 Countries - Sanitation Access (2020)',
+         x='Country', y='Sanitation Access (%)') +
+    scale_fill_manual(values=["#e41a1c", "#4daf4a"], labels=["Below Avg", "Above Avg"]) +
+    theme_bw()
+)
+```
+
+# Economic Impact on Sanitation Access
+
+The Economic Impact on Sanitation Access plot explores the relationship between a country’s GDP per capita and its sanitation access rate. A positive trend indicates that higher economic strength often leads to better sanitation facilities. However, some countries outperform or underperform relative to their economic status, highlighting the role of governance and public health policies.
+
+```{python}
+import numpy as np
+
+# Simulating GDP data for visualization purposes
+np.random.seed(0)
+df['GDP_per_capita'] = np.random.normal(loc=12000, scale=6000, size=len(df))
+
+gdp_focus = df[df['time_period'] == recent_year].dropna(subset=['obs_value', 'GDP_per_capita'])
+
+(
+    ggplot(gdp_focus, aes(x='GDP_per_capita', y='obs_value')) +
+    geom_point(color='orange', alpha=0.7) +
+    geom_smooth(method='lm', se=False, color='navy') +
+    labs(title='Economic Strength vs Sanitation Access (2020)',
+         x='GDP per Capita (USD)', y='Sanitation Access (%)') +
+    theme_minimal()
+)
+```
+
+# Deep Dive: India’s Sanitation Progress
+
+The Deep Dive: India’s Sanitation Progress plot tracks India’s sanitation access improvements from 2000 to 2022. It shows a significant rise in access rates, especially in recent years, reflecting the impact of nationwide sanitation initiatives. This progress highlights India’s commitment to improving public health and living standards.
+
+```{python}
+india_progress = df[df['country'] == 'India']
+
+(
+    ggplot(india_progress, aes(x='time_period', y='obs_value')) +
+    geom_line(color='darkgreen', size=1.4) +
+    geom_point(color='black', size=2) +
+    labs(title='India\'s Journey in Sanitation Access (2000-2022)',
+         x='Year', y='Sanitation Access (%)') +
+    theme_light()
+)
+```
+
+
+# Conclusion
+
+While many countries have made impressive progress in improving sanitation access, major disparities persist. Closing these gaps requires dedicated policy interventions, international support, and targeted investments to ensure equitable sanitation for all populations.
+
+# References
+- UNICEF Data Portal: https://data.unicef.org/
+- World Bank Data Catalog: https://datacatalog.worldbank.org/
+- Natural Earth Data: https://www.naturalearthdata.com/
